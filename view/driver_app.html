@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Driver App</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+  <h2>Driver App Driver id : <span id="driver_id"></span> <button type="button" id="refresh" class="btn btn-info"> Refresh </button></h2>
+  
+ 
+  <ul class="nav nav-tabs">
+    <li class="active"><a data-toggle="tab" href="#Waitting">Waitting</a></li>
+    <li><a data-toggle="tab" href="#Ongoing">Ongoing</a></li>
+    <li><a data-toggle="tab" href="#Complete">Complete</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <div id="Waitting" class="tab-pane fade in active">
+        <h2>Waitting List of Request</h2>
+		  <div class="list-group" id="Waitting_list">
+			
+		  </div>
+    </div>
+    <div id="Ongoing" class="tab-pane fade">
+      <h3>Ongoing</h3>
+      <div class="list-group" id="selected_list">
+		
+	  </div>
+
+			
+    </div>
+
+
+     <div id="Complete" class="tab-pane fade">
+      <h3>Complete</h3>
+      <div class="list-group" id="completed_list">
+		
+	  </div>
+
+			
+    </div>
+
+
+    
+  </div>
+</div>
+
+<script type="text/javascript">
+
+	function getParameterByName(name, url) {
+	    if (!url) url = window.location.href;
+	    name = name.replace(/[\[\]]/g, "\\$&");
+	    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+	        results = regex.exec(url);
+	    if (!results) return null;
+	    if (!results[2]) return '';
+	    return decodeURIComponent(results[2].replace(/\+/g, " "));
+	}
+
+	
+
+	function showTimer(ride_id){
+			// Set the date we're counting down to 300000 ms
+	  	var countDownDate = new Date().getTime() + 300000;
+	//var countDownDate = new Date("Jan 5, 2018 15:37:25").getTime();
+
+	// Update the count down every 1 second
+		var x = setInterval(function() {
+
+	    // Get todays date and time
+	    var now = new Date().getTime();
+	    
+	    // Find the distance between now an the count down date
+	    var distance = countDownDate - now;
+	    
+	    // Time calculations for days, hours, minutes and seconds
+
+	    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+	    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+	    
+	    // Output the result in an element with id="demo"
+	    document.getElementById("timer"+ride_id).innerHTML = minutes + " : " + seconds + "  Min ";
+	    
+	    // If the count down is over, write some text 
+	    if (distance < 0) {
+	        clearInterval(x);
+	        document.getElementById("timer"+ride_id).innerHTML = "Completed";
+	        completeRide(ride_id);
+	    }
+	}, 1000);
+	}
+
+	function selectCustomer(ride_id){
+			var driver_id =  getParameterByName("id");
+			$("#driver_id").html(driver_id);
+
+
+			$.post("../controller/select_customer.php",
+	        {
+	          ride_id: ride_id,
+	          driver_id : driver_id
+	        },
+	        function(result,status){
+	        	
+	        	if (result.status == "OK") {
+	        		$('.nav-tabs a[href="#Ongoing"]').tab('show');
+	        		$("#refresh").click();
+	        		showTimer(ride_id);
+	        	}else{
+					$('.nav-tabs a[href="#Waitting"]').tab('show');
+	        	}
+	        });       
+	}	
+
+	function completeRide(ride_id){
+			var driver_id =  getParameterByName("id");
+			$("#driver_id").html(driver_id);
+
+
+			$.post("../controller/complete_ride.php",
+	        {
+	          ride_id: ride_id,
+	          driver_id : driver_id
+	        },
+	        function(result,status){
+	        	
+	        	if (result.status == "OK") { 
+	        		$('.nav-tabs a[href="#Complete"]').tab('show');
+	        		$("#refresh").click();
+	        		showTimer(ride_id);
+	        	}else{
+					$('.nav-tabs a[href="#Ongoing"]').tab('show');
+	        	}
+	        });       
+	}		
+
+
+	$(document).ready(function(){
+
+		var driver_id =  getParameterByName("id");
+		$("#driver_id").html(driver_id);
+
+
+
+	    $("#refresh").click(function(){
+	        $.post("../controller/refresh_dashboard.php",
+	        {
+	          driver_id: driver_id
+	        },
+	        function(result,status){
+	        	if (result.status == "OK") {
+	        		
+	        		var data = result.data;
+	        		var Waitting_list = '';
+	        		var selected_list = '';
+	        		var completed_list = '';
+
+	        		for (var i = 0; i < data.length; i++) {
+	        			if(data[i].status=='0'){
+	        				Waitting_list += '<a class="list-group-item">\
+								<button type="button" onclick="selectCustomer('+data[i].ride_id+')" class="btn btn-success"> Select </button>\
+								 Request id : '+data[i].req_id +' | Customer id : '+data[i].cust_id +'  | Requested At :  '+data[i].req_at +' \
+								</a>';
+	        			}
+	        			if(data[i].status=='1'){
+	        				selected_list += '<a class="list-group-item" title="Automatically complete in 5 min">\
+								 <b>Automatically Complete in <span style="color:green;font-size:18px;" id="timer'+data[i].ride_id+'"></span> </b> \
+								 Request id : '+data[i].req_id +' | Customer id : '+data[i].cust_id +' |  Requested At : '+data[i].req_at +'  | Picked At : '+data[i].selected_at +'</a>';
+	        			}
+	        			if(data[i].status=='2'){
+	        				completed_list += '<a class="list-group-item">\
+								Request id : '+data[i].req_id +' | Customer id : '+data[i].cust_id +'  | Requested At '+data[i].req_at +' |  Picked UP '+ data[i].selected_at +' Completed  At  '+data[i].completed_at +'Min ago </a>';
+	        			}
+
+	        			
+	        		}
+	        		$("#Waitting_list").html(Waitting_list);
+	        		$("#selected_list").html(selected_list);
+	        		$("#completed_list").html(completed_list);
+
+	        	}else{
+	        		// $('#message').removeClass("hide");
+	        		// $('#message').addClass("alert alert-danger");
+	        		// $('#message').html(result.data);
+	        	}
+	        	
+	         
+	        });
+	    });
+});
+</script>
+</body>
+</html>

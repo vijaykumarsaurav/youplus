@@ -1,0 +1,9 @@
+
+Technology used : html, bootstrap, jquery , PHP and Mysql.
+
+
+MVC FOLLOWED 
+ 
+API 
+
+
