@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Customer App</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+  <h2>Customer App</h2>
+  
+  <div class="panel-group">
+   
+
+    <div class="panel panel-primary">
+      <div class="panel-heading">Customer App</div>
+
+      <div class="panel-body">
+      	<div class="form-group">
+		  <label for="usr">Customer ID :</label>
+		  <input type="text" class="form-control" id="Customer_ID" name="Customer_ID">
+		</div>
+
+		<div id="message" class="alert alert-success hide" role="alert">
+		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		  <strong>Well done!</strong>You have successfully booked your ride.
+		</div>
+
+      	<button type="button" id="ride_now" class="btn btn-info"> RIDE NOW </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script type="text/javascript">
+	document.getElementById('Customer_ID').onkeydown = function(e){
+	   if(e.keyCode == 13){
+	    $("#ride_now").click();
+	   }
+	};
+
+	$(document).ready(function(){
+	    $("#ride_now").click(function(){
+	        $.post("../controller/create_ride.php",
+	        {
+	          Customer_ID: $('#Customer_ID').val()
+	        },
+	        function(result,status){
+	        	if (result.status == "OK") {
+	        		$('#message').removeClass("hide");
+	        		setTimeout(function(){
+	        			$('#message').addClass("hide");
+	        			$('#Customer_ID').val("");
+	        		}, 3000)
+	        	}else{
+	        		$('#message').removeClass("hide");
+	        		$('#message').addClass("alert alert-danger");
+	        		$('#message').html(result.data);
+	        	}
+	        });
+	    });
+});
+</script>
+</body>
+</html>

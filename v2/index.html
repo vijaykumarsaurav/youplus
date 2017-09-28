@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Driver App</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+
+<div id="container" class="container">
+  <h2>Dashborad</h2>     
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <th>Request id</th>
+        <th>Customer id</th>
+        <th>Time Elapsed</th>
+		<th>Status</th>
+		<th>Driver</th>
+      </tr>
+    </thead>
+    <tbody id="update_table">
+      
+    </tbody>
+  </table>
+</div>
+
+<script type="text/javascript">
+	if(typeof(EventSource) !== "undefined") {
+	    var source = new EventSource("controller/route.php?type=1");
+	    source.onmessage = function(event) {
+	    	var result =  JSON.parse(event.data);
+	    	updateUi(result);
+	       // document.getElementById("result").innerHTML += event.data + "<br>";
+	    };
+	} else {
+	    document.getElementById("container").innerHTML = "Sorry, your browser does not support server-sent events...";
+	}
+
+	// CONVERT MILLISECONDS TO DIGITAL CLOCK FORMAT
+	function convertMillisecondsToDigitalClock(ms) {
+	    hours = Math.floor(ms / 3600000), // 1 Hour = 36000 Milliseconds
+	    minutes = Math.floor((ms % 3600000) / 60000), // 1 Minutes = 60000 Milliseconds
+	    seconds = Math.floor(((ms % 360000) % 60000) / 1000) // 1 Second = 1000 Milliseconds
+	        return {
+	        hours : hours,
+	        minutes : minutes,
+	        seconds : seconds,
+	        clock :  minutes + " min " + seconds + " sec "
+	    };
+	    // clock : hours + " hour " + minutes + " min " + seconds + " sec "
+	}
+	function updateUi(result){
+
+		if (result.status == "OK") {
+	        		
+    		var data = result.data;
+    		var update_table = '';
+
+    		for (var i = 0; i < data.length; i++) {
+    			
+    				var status = '';
+    				if(data[i].status == '0')
+    				 	status =  "Waitting";
+    				else if(data[i].status == '1')
+    					status =  "Ongoing";
+    				else if(data[i].status == '2')
+    					status =  "Complete";
+
+    				var start_time = new Date(data[i].req_at).getTime();
+    				var end_time =  new Date().getTime();
+
+    				
+    				if(data[i].status == '2')
+    					end_time = new Date(data[i].completed_at).getTime();
+    			
+
+    				//var timelap =  start_time - end_time;
+    				var timelap =  end_time - start_time;
+    			console.log( "start_time : "+start_time  + " |  end_time : "+end_time + " | laps : " +timelap);
+
+    				
+    				var timelaped = convertMillisecondsToDigitalClock(timelap);
+
+    				update_table += '<tr>\
+						<td> '+data[i].req_id +' </td>\
+						<td> '+data[i].cust_id +' </td> \
+						<td> '+ timelaped.clock  +' </td> \
+						<td> '+ status +'</td> \
+						<td>'+data[i].driver_id +'</td>';	        			
+    		}
+    		$("#update_table").html(update_table);
+    	}
+	}
+</script>
+</body>
+</html>
